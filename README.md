@@ -6,8 +6,8 @@ The client application is shipped as a Streamlit application. Server application
 ## Software architecture
 Traditional web application architecture with a REST approach which includes:
 
-*Data tier: Data persistence service on relational databases;
-*Logic tier: CRUD functionality on data according to a language-agnostic REST-API interface, validation of data entered into the system (pre-conditions), computation of data independent of the information provided at client level post-conditions);
+* Data tier: Data persistence service on relational databases;
+* Logic tier: CRUD functionality on data according to a language-agnostic REST-API interface, validation of data entered into the system (pre-conditions), computation of data independent of the information provided at client level post-conditions);
 *Presentation tier: Interaction service with the API provided at server level, with stateless mode or without context storage between client and server, in order to facilitate decoupling between the two components which must enjoy operational autonomy.
 
 Data tier and logic tier are the components of the Server-side of the application.
