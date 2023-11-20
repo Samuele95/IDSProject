@@ -3,6 +3,9 @@
 Project for "Ingegneria del Software" exam, bachelor degree in Computer Science, Università degli Studi di Camerino.
 The client application is shipped as a Streamlit application. Server application is intended to be used as a service within a machine. 
 
+## Business case
+Development of a platform to be used by businesses and customers, aimed at encouraging loyalty relationships. This platform aims to provide a common hub in which commercial businesses present themselves to the public and communicate with each other and with the customers themselves. Commercial establishments can join together in common "loyalty programmes", channels constituting a means through which a customer is able to obtain economic advantages and rewards thanks to the loyalty towards the commercial establishment or the consortium of companies participating in the program itself, while commercial businesses can adopt strategies aimed at retaining existing customers and obtaining new ones.
+
 ## Software architecture
 Traditional web application architecture with a REST approach which includes:
 
