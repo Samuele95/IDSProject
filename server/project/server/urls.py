@@ -1,12 +1,14 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from .views import UserViewSet, ShopViewSet
+from .views import UserViewSet, ShopViewSet, FidelityProgramViewSet, CatalogueViewSet
 
 # Create a router and register viewsets with it.
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename="user")
 router.register(r'shops', ShopViewSet, basename="shop")
+router.register(r'fidelityprograms', FidelityProgramViewSet, basename='fidelityprogram')
+router.register(r'catalogue', CatalogueViewSet, basename='catalogue')
 
 
 # The API URLs are determined automatically by the router.
