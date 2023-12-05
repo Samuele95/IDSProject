@@ -54,3 +54,71 @@ class Shop(models.Model):
 
     def __str__(self):
         return self.name
+
+class FidelityProgram(models.Model):
+    CASHBACK = 'CASHBACK'
+    LEVELS = 'LEVELS'
+    POINTS = 'POINTS'
+    MEMBERSHIP = 'MEMBERSHIP'
+    GENERIC = 'GENERIC'
+    PROGRAM_TYPE_CHOICES = [
+        (CASHBACK, "Cashback"),
+        (LEVELS, "Levels"),
+        (POINTS, "Points"),
+        (MEMBERSHIP, "Membership"),
+        (GENERIC, "Generic"),
+    ]
+
+    shop_list = models.ManyToManyField(Shop)
+    name = models.CharField(max_length=30, primary_key=True)
+    program_type = models.CharField(
+        max_length=10,
+        choices=PROGRAM_TYPE_CHOICES,
+        default=GENERIC
+    )
+    description = models.TextField(max_length=1000)
+    points_coefficient = models.FloatField()
+    prize_coefficient = models.FloatField()
+
+    class Meta:
+        verbose_name = 'fidelityprogram'
+        verbose_name_plural = '3. Fidelity Programs'
+
+    def is_coalition(self):
+        return self.shop_list.all().count() > 1
+
+    def __str__(self):
+        return '({name} , {prtype})'.format(name=self.name, prtype=self.program_type)
+
+
+class Catalogue(models.Model):
+    points = models.FloatField(null=True)
+
+    # Database relationships
+    customer = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='customer'
+    )
+    fidelity_program = models.ForeignKey(
+        FidelityProgram,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='catalogue_fidelity_program'
+    )
+
+    class Meta:
+        verbose_name = 'catalogue'
+        verbose_name_plural = '4. Catalogue'
+        constraints = [
+            models.UniqueConstraint(fields=['customer', 'fidelity_program'], name='catalogue_key')
+        ]
+
+    def __str__(self):
+        return '({program}, {csmr}, {pts})'.format(
+            program=self.fidelity_program,
+            csmr=self.customer,
+            pts=self.points
+        )
+
