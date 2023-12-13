@@ -18,8 +18,8 @@ if __name__ == '__main__':
         initial_sidebar_state="expanded",
     )
     hide_pages(['main', 'mainpage', 'businessownerdashboard', 'businessownerloginpage', 'cashierdashboard', 'cashierloginpage', 'customerdashboard', 'customerloginpage'])
-    userdata = UserDetail(url=users_endpoint + 'admin').get()
-    shopdata = ShopDetail(url=shops_endpoint + 'Test shop').get()
+    userdata = UserDetail(url=st.session_state['user_url']).get()
+    shopdata = ShopDetail(url=st.session_state['shop_url']).get()
     user_view = GenericUserView(userdata)
     fidelity_program_view = BusinessOwnerFidelityProgramView(shopdata,user_view)
     shop_view = CashierShopView(shopdata, user_view, fidelity_program_view)
