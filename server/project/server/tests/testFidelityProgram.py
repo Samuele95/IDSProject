@@ -4,7 +4,7 @@ from django.db.utils import IntegrityError
 from rest_framework import status
 from rest_framework.test import APITestCase
 from server.models import User, Shop, FidelityProgram
-
+from server.modelvalidators import CashbackProgramSerializer, PointsProgramSerializer
 
 def resource_full_url(objpath):
     """
@@ -40,10 +40,8 @@ class FidelityProgramTestCase(TestCase):
 
         self.fidelity_program = FidelityProgram(
             name='Programma fedeltà',
-            program_type=FidelityProgram.POINTS,
+            program_type=FidelityProgram.GENERIC,
             description='Test fidelity program',
-            points_coefficient=0.5,
-            prize_coefficient=0.5
         )
         self.fidelity_program.save()
         self.fidelity_program.shop_list.add('La buona pizza')
@@ -53,6 +51,44 @@ class FidelityProgramTestCase(TestCase):
         """ Should correctly store fidelity program """
         stored_fp = FidelityProgram.objects.get()
         self.assertEqual(stored_fp.description, 'Test fidelity program')
+
+    def test_create_cashback_program(self):
+        """ Should correctly store cashback program"""
+        data = {
+            'name':'Cashback program',
+            'program_type':FidelityProgram.CASHBACK,
+            'description':'Test fidelity program',
+        }
+        serializer = CashbackProgramSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+        self.assertTrue(FidelityProgram.objects.filter(name='Cashback program').exists())
+        self.assertEqual(FidelityProgram.objects.filter(name='Cashback program').get().points_coefficient, -0.5)
+
+    def test_create_points_program(self):
+        """ Should correctly store cashback program"""
+        data = {
+            'name':'Points program',
+            'program_type':FidelityProgram.POINTS,
+            'description':'Test fidelity program',
+        }
+        serializer = PointsProgramSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+        self.assertTrue(FidelityProgram.objects.filter(name='Points program').exists())
+        self.assertEqual(FidelityProgram.objects.filter(name='Points program').get().points_coefficient, 0.5)
+    
+    def test_should_not_create_different_program_type(self):
+        """ Should not store different type of program"""
+        data = {
+            'name':'Cashback program',
+            'program_type':FidelityProgram.CASHBACK,
+            'description':'Test fidelity program',
+        }
+        serializer = PointsProgramSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+        self.assertFalse(FidelityProgram.objects.filter(name='Cashback program').exists())
 
     def test_update_fidelity_program(self):
         """ Should update stored fidelity program """
@@ -122,7 +158,7 @@ class FidelityProgramAPITestCase(APITestCase):
         shop_url = reverse('shop-detail', kwargs={'pk': 'La buona pizza'})
         data = {
             'name': 'Programma fedeltà',
-            'program_type': FidelityProgram.POINTS,
+            'program_type': FidelityProgram.GENERIC,
             'description': 'Test fidelity program',
             'shop_list': [resource_full_url(shop_url)]
         }
@@ -178,13 +214,13 @@ class FidelityProgramAPITestCase(APITestCase):
         another_shop_url = reverse('shop-detail', kwargs={'pk': 'Evergreen market'})
         fidelity_program = {
             'name': 'Programma fedelta',
-            'program_type': FidelityProgram.POINTS,
+            'program_type': FidelityProgram.GENERIC,
             'description': 'Test fidelity program',
             'shop_list': [resource_full_url(shop_url)]
         }
         another_fidelity_program = {
             'name': 'Another program',
-            'program_type': FidelityProgram.LEVELS,
+            'program_type': FidelityProgram.GENERIC,
             'description': 'I am just a copy!!',
             'shop_list': [resource_full_url(another_shop_url)]
         }
@@ -215,13 +251,13 @@ class FidelityProgramAPITestCase(APITestCase):
         another_shop_url = reverse('shop-detail', kwargs={'pk': 'Evergreen market'})
         fidelity_program = {
             'name': 'Programma fedelta',
-            'program_type': FidelityProgram.POINTS,
+            'program_type': FidelityProgram.GENERIC,
             'description': 'Test fidelity program',
             'shop_list': [resource_full_url(shop_url)]
         }
         updated_fidelity_program = {
             'name': 'Programma fedelta',
-            'program_type': FidelityProgram.POINTS,
+            'program_type': FidelityProgram.GENERIC,
             'description': 'Test fidelity program',
             'shop_list': [
                 resource_full_url(shop_url),
@@ -254,13 +290,13 @@ class FidelityProgramAPITestCase(APITestCase):
         another_shop_url = reverse('shop-detail', kwargs={'pk': 'Evergreen market'})
         fidelity_program = {
             'name': 'Programma fedelta',
-            'program_type': FidelityProgram.POINTS,
+            'program_type': FidelityProgram.GENERIC,
             'description': 'Test fidelity program',
             'shop_list': [resource_full_url(shop_url)]
         }
         another_fidelity_program = {
             'name': 'Another program',
-            'program_type': FidelityProgram.LEVELS,
+            'program_type': FidelityProgram.GENERIC,
             'description': 'I am just a copy!!',
             'shop_list': [resource_full_url(another_shop_url)]
         }
