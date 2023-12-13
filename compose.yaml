@@ -1,0 +1,9 @@
+services:
+  plserver:
+    build: ./server
+    ports:
+      - "8000:8000"
+  plclient:
+    build: ./client
+    ports:
+      - "8501:8501"
