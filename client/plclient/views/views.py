@@ -1,11 +1,26 @@
 from __future__ import annotations
 from typing import Protocol, runtime_checkable
 from dataclasses import dataclass
+
+from streamlit_extras.switch_page_button import switch_page
 from streamlit_option_menu import option_menu
+
+from plclient.api.shopapi import ShopList
+from plclient.api.userapi import UserDetail
+from plclient.forms.forms import Table
+from plclient.forms.userforms import UserCreateForm, LoginForm
 from plclient.utils.settings import users_endpoint, shops_endpoint, fidelity_programs_endpoint, catalogue_endpoint
-from views.uiform import UserForm, UserCreateForm, UserSetPasswordForm, Table, ShopForm, FidelityProgramForm, FidelityProgramCreateForm, CatalogueForm, CatalogueCreateForm, CatalogueUpdateForm
-from views.apiclient import UserDetail, UserList, ShopDetail, ShopList, FidelityProgramDetail, FidelityProgramList, CatalogueDetail, CatalogueList
+from plclient.views.userviews import GenericUserView
+from plclient.views.shopviews import CustomerShopView, CashierShopView
+from plclient.views.fidelityprogramviews import ReadOnlyFidelityProgramView, CashierFidelityProgramView, \
+    BusinessOwnerFidelityProgramView
+from plclient.views.transactionviews import CustomerTransactionView, CashierTransactionView
 import streamlit as st
+import requests
+import os
+
+app_image = os.path.dirname(__file__) + '/plplatform.png'
+
 
 @runtime_checkable
 class View(Protocol):
@@ -26,151 +41,264 @@ class View(Protocol):
 @dataclass(frozen=True, eq=True, order=True)
 class UserDashboard:
     """
-    ClientView instance of a user which doesn't have 
-    administrative privileges. It may be associated 
-    to both a customer and a business user.
+    View instance for the App Dashboard shown
+    to a customer.
     """
 
-    user_view : UserView
-    shop_view : ShopView
-    fidelity_program_view : FidelityProgramView
-    catalogue_view : CatalogueView
+    user_view: GenericUserView
+    shop_view: CustomerShopView
+    fidelity_program_view: ReadOnlyFidelityProgramView
+    transaction_view: CustomerTransactionView
 
     def open_view(self):
         st.title('Project Loyalty Platform')
+        st.subheader('Customer dashboard')
         self.sideBar()
-    
+
     def close_view(self):
-        st.write('LOGOUT')
+        st.session_state['token'] = None
+        st.session_state['user_url'] = None
+        st.session_state['user_url'] = None
+        switch_page('main')
 
     def home(self):
-        return self.user_view.open_view() 
+        return self.user_view.open_view()
 
-    def sideBar(self): 
+    def sideBar(self):
+        st.sidebar.image(app_image, caption="Developed and Maintaned by Samuele95")
         with st.sidebar as sidebar:
-            selected=option_menu(
+            selected = option_menu(
                 menu_title="Main Menu",
-                options=['Home', 'Shops', 'Fidelity Programs', 'Logout'],
-                icons=['house', 'cart', 'people', 'dash-circle'],
+                options=['Home', 'Shops', 'Fidelity Programs', 'Orders', 'Logout'],
+                icons=['house', 'shop', 'people', 'cart', 'dash-circle'],
                 menu_icon="cast",
                 default_index=0
             )
-        if selected=="Home":
+        if selected == "Home":
             self.home()
-        if selected=='Shops':
+        if selected == 'Shops':
             self.shop_view.open_view()
-        if selected=='Fidelity Programs':
+        if selected == 'Fidelity Programs':
             self.fidelity_program_view.open_view()
-                    #st.write(fprograms)
-                #with fprog_col2:
-                #    if fprograms.size != 0:
-                        #for prog in fprograms.loc[2:3,'url']:
-                #            st.write(FidelityProgramDetail(fprograms.iloc[0].to_dict()['url']))
-        if selected=='Logout':
+        if selected == 'Orders':
+            self.transaction_view.open_view()
+        if selected == 'Logout':
             self.close_view()
 
 
 @dataclass(frozen=True, eq=True, order=True)
-class UserView:
-    user : UserDetail
+class CashierDashboard:
+    """
+    View instance for the App Dashboard shown
+    to a cashier.
+    """
+
+    user_view: GenericUserView
+    shop_view: CashierShopView
+    fidelity_program_view: CashierFidelityProgramView
+    transaction_view: CashierTransactionView
+
+    # catalogue_view : CatalogueView
 
     def open_view(self):
-        home_col1, home_col2 = st.columns(2)
-        with home_col1:
-            user_profile, change_password = st.tabs(['User profile', 'Change password'])
-            with user_profile:
-                self.get_self_user().show()
-            with change_password:
-                UserSetPasswordForm(self.user).show()
-        with home_col2:
-            st.markdown("Welcome to Project Loyalty Platfom.\nThis platform aims to provide a common hub in which commercial businesses present themselves to the public and communicate with each other and with the customers themselves.\nCommercial establishments can join together in common loyalty programmes, channels constituting a way through which a customer is able to obtain economic advantages and rewards thanks to the loyalty towards the commercial establishment or the consortium of companies participating in the program itself, while commercial businesses can adopt strategies aimed at retaining existing customers and obtaining new ones.\nFor further clarification and for additional information, send an email to projectloyalty@gmail.com")
+        st.title('Project Loyalty Platform')
+        st.subheader('Cashier dashboard')
+        self.sideBar()
 
     def close_view(self):
-        raise NotImplementedError
+        st.session_state['token'] = None
+        st.session_state['user_url'] = None
+        st.session_state['shop_url'] = None
+        switch_page('main')
 
-    def get_user(self, username: str):
-        return UserForm(UserDetail(url=users_endpoint+username).get())
-    
-    def get_self_user(self):
-        return UserForm(self.user)
-    
-    def user_create_form(self):
-        return UserCreateForm(UserDetail)
+    def home(self):
+        return self.user_view.open_view()
+
+    def sideBar(self):
+        st.sidebar.image(app_image, caption="Developed and Maintaned by Samuele95")
+        with st.sidebar as sidebar:
+            selected = option_menu(
+                menu_title="Main Menu",
+                options=['Home', 'Shop', 'Fidelity Programs', 'Orders', 'Logout'],
+                icons=['house', 'shop', 'people', 'cart', 'dash-circle'],
+                menu_icon="cast",
+                default_index=0
+            )
+        if selected == "Home":
+            self.home()
+        if selected == 'Shop':
+            self.shop_view.open_view()
+        if selected == 'Fidelity Programs':
+            self.fidelity_program_view.open_view()
+        if selected == 'Orders':
+            self.transaction_view.open_view()
+        if selected == 'Logout':
+            self.close_view()
+
 
 @dataclass(frozen=True, eq=True, order=True)
-class ShopView:
-    shop : ShopDetail | None = None
+class BusinessOwnerDashboard:
+    """
+    View instance for the App Dashboard shown
+    to a business owner.
+    """
+
+    user_view: GenericUserView
+    shop_view: CashierShopView
+    fidelity_program_view: BusinessOwnerFidelityProgramView
 
     def open_view(self):
-        all_shops, selected_shop = st.columns(2)
-        with all_shops:
-            shops = self.get_all_shops().show()
-        with selected_shop:
-            if len(shops.selected_rows) > 0:
-                self.get_shop(shops.selected_rows[0]['name']).show()
+        st.title('Project Loyalty Platform')
+        st.subheader('Business owner dashboard')
+        self.sideBar()
 
     def close_view(self):
-        raise NotImplementedError
+        st.session_state['token'] = None
+        st.session_state['user_url'] = None
+        st.session_state['user_url'] = None
+        switch_page('main')
 
-    def get_shop(self, shopname: str):
-        return ShopForm(ShopDetail(url=shops_endpoint+shopname).get())
-    
-    def get_session_shop(self):
-        return ShopForm(self.shop) if self.shop is not None else st.write('No shop associated to this user')
-    
-    def get_all_shops(self):
-        return Table(element=ShopList(), columns=['url', 'name', 'location'], hidden_columns=['url'])
+    def home(self):
+        if self.shop_view.shop.owner is None or self.shop_view.shop.owner != self.user_view.user.url:
+            raise ValueError('You must be the owner of the selected shop')
+        return self.user_view.open_view()
 
-@dataclass(frozen=True, eq=True, order=True)
-class FidelityProgramView:
+    def sideBar(self):
+        st.sidebar.image(app_image, caption="Developed and Maintaned by Samuele95")
+        with st.sidebar as sidebar:
+            selected = option_menu(
+                menu_title="Main Menu",
+                options=['Home', 'Shop', 'Fidelity Programs', 'Logout'],
+                icons=['house', 'shop', 'people', 'dash-circle'],
+                menu_icon="cast",
+                default_index=0
+            )
+        if selected == "Home":
+            self.home()
+        if selected == 'Shop':
+            self.shop_view.open_view()
+        if selected == 'Fidelity Programs':
+            self.fidelity_program_view.open_view()
+        if selected == 'Logout':
+            self.close_view()
+
+class CustomerLogin:
 
     def open_view(self):
-        with st.container() as container:
-            fprog_col1, fprog_col2 = st.columns(spec=2, gap='large')
-            fprograms = None
-            with fprog_col1:
-                if fprograms is None:
-                    fprograms = self.get_all_fidelity_programs().show()
-            with fprog_col2:
-                if len(fprograms.selected_rows) > 0:
-                    st.write(self.get_fidelity_program(fprograms.selected_rows[0]['name']).show())
+        login_tab, signup_tab = st.tabs(["Login", "Signup"])
+        with login_tab:
+            login = LoginForm().show()
+            if login.token is not None and login.user_url is not None:
+                st.session_state['token'] = login.token
+                st.session_state['user_url'] = login.user_url
+                switch_page('customerdashboard')
+            button = st.button('Back')
+            if button:
+                self.close_view()
+        with signup_tab:
+            UserCreateForm().show()
 
     def close_view(self):
-        raise NotImplementedError
+        st.session_state['token'] = None
+        st.session_state['user_url'] = None
+        st.session_state['user_url'] = None
+        switch_page('main')
 
-    def get_all_fidelity_programs(self):
-        return Table(element=FidelityProgramList(), columns=['url', 'name', 'program_type'], hidden_columns=['url'])
+class CashierLogin:
 
-    def get_all_fidelity_programs_by_shop(self, shopname: str):
-        return Table(element=FidelityProgramList(api_endpoint=fidelity_programs_endpoint+'byshop/'+shopname), columns=['url', 'name', 'program_type'], hidden_columns=['url'])
-    
-    def create_fidelity_program(self):
-        return FidelityProgramCreateForm(FidelityProgramDetail())
-    
-    def get_fidelity_program(self, programname: str):
-        return FidelityProgramForm(FidelityProgramDetail(url=fidelity_programs_endpoint+programname).get())
-    
+    def __init__(self, token: str | None = None, user_url: str | None = None, shop_url: str | None = None) -> None:
+        self.token = token
+        self.user_url = user_url
+        self.shop_url = shop_url
 
-@dataclass(frozen=True, eq=True, order=True)
-class CatalogueView:
+    def open_view(self):
+        if self.user_url is None:
+            st.subheader('Cashier login')
+            with st.container(border=True):
+                login = LoginForm().show()
+                if login.token is not None and login.user_url is not None:
+                    st.session_state['token'] = login.token
+                    st.session_state['user_url'] = login.user_url
+                    switch_page('cashierloginpage')
+                button = st.button('Back')
+                if button:
+                    self.close_view()
+        elif self.shop_url is None:
+            st.subheader('Please, select a shop')
+            with st.container(border=True):
+                shops = self.get_all_shops_by_employee().show()
+                button = st.button('Login')
+                if button and len(shops.selected_rows) > 0:
+                    st.session_state['shop_url'] = shops.selected_rows[0]['url']
+                    switch_page('cashierloginpage')
+                button = st.button('Back')
+                if button:
+                    self.close_view()
+        else:
+            switch_page('cashierdashboard')
 
-    def create_catalogue_element(self):
-        return CatalogueCreateForm(CatalogueDetail())
-    
-    def get_all_catalogue_elements(self):
-        return Table(element=CatalogueList(), columns=['url', 'customer', 'fidelity_program'], hidden_columns=['url'])
+    def close_view(self):
+        st.session_state['token'] = None
+        st.session_state['user_url'] = None
+        st.session_state['user_url'] = None
+        switch_page('main')
 
-    def get_all_catalogue_elements_by_user(self, username: str):
-        return Table(element=CatalogueList(api_endpoint=catalogue_endpoint+username), columns=['url', 'customer', 'fidelity_program'], hidden_columns=['url'])
-    
-    def get_all_catalogue_elements_by_fidelity_program(self, programname: str):
-        return Table(element=CatalogueList(api_endpoint=catalogue_endpoint+programname), columns=['url', 'customer', 'fidelity_program'], hidden_columns=['url'])
-    
-    def get_catalogue_element(self, username: str, programname: str):
-        return CatalogueForm(CatalogueDetail(api_endpoint=catalogue_endpoint+username+'/'+programname).get())
-    
-    def delete_catalogue_element(self, username: str, programname: str):
-        return self.get_catalogue_element(username, programname).element.delete()
+    def get_all_shops_by_employee(self):
+        if self.user_url is None:
+            raise ValueError('Cannot access employee data')
+        employee = UserDetail(url=self.user_url).get()
+        return Table(
+            element= ShopList(api_endpoint=shops_endpoint + 'byemployee/' + employee.username),
+            columns=['url', 'name', 'location'],
+            hidden_columns=['url']
+        )
 
-    def update_catalogue_element(self, username: str, programname: str):
-        return CatalogueUpdateForm(self.get_catalogue_element(username, programname))
+
+class BusinessOwnerLogin:
+
+    def __init__(self, token: str | None = None, user_url: str | None = None, shop_url: str | None = None) -> None:
+        self.token = token
+        self.user_url = user_url
+        self.shop_url = shop_url
+
+    def open_view(self):
+        if self.user_url is None:
+            st.subheader('Business owner login')
+            with st.container(border=True):
+                login = LoginForm().show()
+                if login.token is not None and login.user_url is not None:
+                    st.session_state['token'] = login.token
+                    st.session_state['user_url'] = login.user_url
+                    switch_page('businessownerloginpage')
+                button = st.button('Back')
+                if button:
+                    self.close_view()
+        elif self.shop_url is None:
+            st.subheader('Please, select a shop')
+            with st.container(border=True):
+                shops = self.get_all_shops_by_owner().show()
+                button = st.button('Login')
+                if button and len(shops.selected_rows) > 0:
+                    st.session_state['shop_url'] = shops.selected_rows[0]['url']
+                    switch_page('businessownerloginpage')
+                button = st.button('Back')
+                if button:
+                    self.close_view()
+        else:
+            switch_page('businessownerdashboard')
+
+    def close_view(self):
+        st.session_state['token'] = None
+        st.session_state['user_url'] = None
+        st.session_state['user_url'] = None
+        switch_page('main')
+
+    def get_all_shops_by_owner(self):
+        if self.user_url is None:
+            raise ValueError('Cannot access employee data')
+        employee = UserDetail(url=self.user_url).get()
+        return Table(
+            element= ShopList(api_endpoint=shops_endpoint + 'byowner/' + employee.username),
+            columns=['url', 'name', 'location'],
+            hidden_columns=['url']
+        )

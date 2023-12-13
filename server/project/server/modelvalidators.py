@@ -1,5 +1,6 @@
+from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
-from .models import User, Shop, FidelityProgram, Catalogue
+from .models import User, Shop, FidelityProgram, Catalogue, Product, Transaction
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -12,7 +13,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['url', 'username', 'password', 'email',
                   'groups', 'phone', 'avatar', 'bio',
                   'location']
-
+        validate_password = make_password
 
 class ShopSerializer(serializers.HyperlinkedModelSerializer):
     """
@@ -151,3 +152,40 @@ class CatalogueSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['url', 'id', 'points',
                   'customer', 'fidelity_program']
 
+class ProductSerializer(serializers.HyperlinkedModelSerializer):
+    """
+    Product serialization class for field validation purposes.
+    """
+
+    class Meta:
+        model = Product
+        fields = ['url', 'id', 'name', 'value',
+                  'points_coefficient', 'prize_coefficient', 'is_persistent',
+                  'shop', 'fidelity_program', 'owning_users']
+        extra_kwargs = {
+            'fidelity_program': {'required': False},
+            'owning_users': {'required': False}
+        }
+
+
+class TransactionSerializer(serializers.HyperlinkedModelSerializer):
+    """
+    Transaction serialization class for field validation purposes.
+    """
+
+    class Meta:
+        model = Transaction
+        fields = ['url', 'id', 'executed_at',
+                  'user', 'shop', 'shopping_cart',
+                  'total']
+        #extra_kwargs = {'shopping_cart': {'required': False}}
+
+    def create(self, validated_data):
+        transaction = Transaction(
+            user=validated_data['user'],
+            shop=validated_data['shop'],
+        )
+        for prod in validated_data['shopping_cart']:
+            transaction.shopping_cart.add(prod)
+        transaction.save()
+        return transaction

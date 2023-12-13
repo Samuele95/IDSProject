@@ -1,11 +1,36 @@
 from rest_framework import viewsets, status
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from .models import User, Shop, FidelityProgram, Catalogue
+from rest_framework.reverse import reverse
+from .models import User, Shop, FidelityProgram, Catalogue, Product, Transaction
 from .modelvalidators import (UserSerializer, ShopSerializer, FidelityProgramSerializer, 
                               CashbackProgramSerializer, PointsProgramSerializer, 
-                              LevelsProgramSerializer, MembershipProgramSerializer, CatalogueSerializer)
+                              LevelsProgramSerializer, MembershipProgramSerializer, CatalogueSerializer,
+                              ProductSerializer, TransactionSerializer)
 
+
+class CustomAuthToken(ObtainAuthToken):
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user_id=user.username)
+        print(reverse('user-detail', kwargs={'pk': 'Marco91'}, request=request))
+        return Response({
+            'token': token.key,
+            'url': reverse('user-detail', kwargs={'pk': user.username}, request=request),
+            'username': user.username,
+            'password': user.password,
+            'email': user.email,
+            'groups': [x for x in user.groups.all()],
+            'avatar': str(user.avatar),
+            'bio': user.bio,
+            'location': user.location,
+        })
 
 class UserViewSet(viewsets.ModelViewSet):
     """
@@ -21,6 +46,28 @@ class ShopViewSet(viewsets.ModelViewSet):
     """
     queryset = Shop.objects.all().order_by('name')
     serializer_class = ShopSerializer
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path=r'byemployee/(?P<username>(\w|\s)+)',
+    )
+    def get_by_employee(self, request, username, pk=None):
+        return Response(self.serializer_class(
+            Shop.objects.filter(employees__in=[username]),
+            many=True,
+            context={'request': request}).data)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path=r'byowner/(?P<username>(\w|\s)+)',
+    )
+    def get_by_owner(self, request, username, pk=None):
+        return Response(self.serializer_class(
+            Shop.objects.filter(owner__username=username),
+            many=True,
+            context={'request': request}).data)
 
 class FidelityProgramViewSet(viewsets.ModelViewSet):
     """
@@ -250,3 +297,95 @@ class CatalogueViewSet(viewsets.ModelViewSet):
                 context={'request': request}).data)
         except Catalogue.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path=r'available_prizes/(?P<customer>\w+)/(?P<program>(\w|\s)+)'
+    )
+    def available_prizes(self, request, customer, program, pk=None):
+        try:
+            points = Catalogue.objects.filter(customer_id=customer).filter(fidelity_program_id=program).get().points
+            return Response(ProductSerializer(
+                Product.objects.filter(
+                    fidelity_program_id=program).filter(
+                    value__lte=points).filter(
+                    is_persistent=True),
+                many=True,
+                context={'request': request}).data)
+        except Catalogue.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class ProductViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint allowing products to be 
+    viewed or edited.
+    """
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path=r'byshop/(?P<shopname>(\w|\s)+)',
+    )
+    def get_by_shop(self, request, shopname, pk=None):
+        try:
+            return Response(self.serializer_class(
+                Product.objects.filter(shop_id=shopname),
+                many=True,
+                context={'request': request}).data)
+        except Product.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path=r'byprogram/(?P<programname>(\w|\s)+)',
+    )
+    def get_by_fidelity_program(self, request, programname, pk=None):
+        try:
+            return Response(self.serializer_class(
+                Product.objects.filter(fidelity_program_id=programname),
+                many=True,
+                context={'request': request}).data)
+        except Product.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path=r'prizes/(?P<programname>(\w|\s)+)',
+    )
+    def get_prizes(self, request, programname, pk=None):
+        try:
+            return Response(self.serializer_class(
+                Product.objects.filter(fidelity_program_id=programname).filter(is_persistent=True),
+                many=True,
+                context={'request': request}).data)
+        except Product.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path=r'owned/(?P<shopname>(\w|\s)+)/(?P<username>(\w|\s)+)',
+    )
+    def get_prizes_owned_by_user(self, request, shopname, username, pk=None):
+        try:
+            return Response(self.serializer_class(
+                Product.objects.filter(shop_id=shopname).filter(owning_users__in=[username]),
+                many=True,
+                context={'request': request}).data)
+        except Product.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+class TransactionViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint allowing transactions to be 
+    viewed or edited.
+    """
+    queryset = Transaction.objects.all()
+    serializer_class = TransactionSerializer
