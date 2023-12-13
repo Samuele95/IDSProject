@@ -21,9 +21,6 @@ if __name__ == '__main__':
         unsafe_allow_html=True
     )
     st.columns(3)[1].image(app_image)
-    st.session_state['token'] = None
-    st.session_state['user_url'] = None
-    st.session_state['shop_url'] = None
     with st.form('Choose dashboard'):
         choice = st.selectbox(
             'Choose a profile type',
