@@ -217,11 +217,12 @@ class ProductCreateForm(Form):
             )
         button = container.button("Create")
         if button:
+            progurl = self.selected_program.url if self.selected_program is not None else None
             self.element = ProductDetail(
                 name=self.name,
                 shop=self.shop.url,
                 value=float(self.prod_value),
-                fidelity_program=self.selected_program.url,
+                fidelity_program=progurl,
                 is_persistent=self.is_persistent,
                 points_coefficient=self.points_coefficient,
                 prize_coefficient=self.prize_coefficient,
