@@ -13,4 +13,4 @@ Fortemente consigliata l'installazione tramite Docker compose. Ulteriori modalit
 Sviluppo di una piattaforma ad uso delle imprese e dei clienti, volta a favorire rapporti di fidelizzazione. Questa piattaforma mira a fornire un hub comune in cui gli esercizi commerciali si presentano al pubblico e comunicano tra loro e con i clienti stessi. Gli esercizi commerciali possono riunirsi in comuni “programmi fedeltà”, canali che costituiscono un mezzo attraverso il quale un cliente può ottenere vantaggi economici e premi grazie alla fedeltà nei confronti dell'esercizio commerciale o del consorzio di imprese aderenti al programma stesso, mentre gli esercizi commerciali sa adottare strategie volte a fidelizzare i clienti esistenti e ad acquisirne di nuovi.
 
 ## Documentazione
-Fare riferimento al [wiki]([https://github.com/facebook/react/wiki/Sites-Using-React](https://github.com/Samuele95/IDSProject/wiki)) del progetto per la documentazione e le modalità di utilizzo
+Fare riferimento al [wiki](https://github.com/Samuele95/IDSProject/wiki) del progetto per la documentazione e le modalità di utilizzo
