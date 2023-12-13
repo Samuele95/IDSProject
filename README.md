@@ -1,24 +1,16 @@
+![plplatform](https://github.com/Samuele95/IDSProject/assets/94041647/3e1fdb61-5370-48bb-9f84-de6a46c7b93c)
+
 # IDSProject
 
-Project for "Ingegneria del Software" exam, bachelor degree in Computer Science, Università degli Studi di Camerino.
-The client application is shipped as a Streamlit application. Server application is intended to be used as a service within a machine. 
+Progetto per l'esame di "Ingegneria del Software", corso di laurea in Informatica, Università degli Studi di Camerino.
+
+## Dettagli
+L'applicazione client è fornita come applicazione Streamlit.
+L'applicazione server è fornita come servizio Django.
+Fortemente consigliata l'installazione tramite Docker compose. Ulteriori modalità di installazione sono indicate nel Wiki
 
 ## Business case
-Development of a platform to be used by businesses and customers, aimed at encouraging loyalty relationships. This platform aims to provide a common hub in which commercial businesses present themselves to the public and communicate with each other and with the customers themselves. Commercial establishments can join together in common "loyalty programmes", channels constituting a means through which a customer is able to obtain economic advantages and rewards thanks to the loyalty towards the commercial establishment or the consortium of companies participating in the program itself, while commercial businesses can adopt strategies aimed at retaining existing customers and obtaining new ones.
+Sviluppo di una piattaforma ad uso delle imprese e dei clienti, volta a favorire rapporti di fidelizzazione. Questa piattaforma mira a fornire un hub comune in cui gli esercizi commerciali si presentano al pubblico e comunicano tra loro e con i clienti stessi. Gli esercizi commerciali possono riunirsi in comuni “programmi fedeltà”, canali che costituiscono un mezzo attraverso il quale un cliente può ottenere vantaggi economici e premi grazie alla fedeltà nei confronti dell'esercizio commerciale o del consorzio di imprese aderenti al programma stesso, mentre gli esercizi commerciali sa adottare strategie volte a fidelizzare i clienti esistenti e ad acquisirne di nuovi.
 
-## Software architecture
-Traditional web application architecture with a REST approach which includes:
-
-* Data tier: Data persistence service on relational databases;
-* Logic tier: CRUD functionality on data according to a language-agnostic REST-API interface, validation of data entered into the system (pre-conditions), computation of data independent of the information provided at client level post-conditions);
-* Presentation tier: Interaction service with the API provided at server level, with stateless mode or without context storage between client and server, in order to facilitate decoupling between the two components which must enjoy operational autonomy.
-
-Data tier and logic tier are the components of the Server-side of the application.
-Presentation tier, together with a specific API client, are the components of the Client-side of the application.
-
-## Technologies used
-
-Python programming language has been chosen as the main programming language of this project due to its dynamic typing and code readability features. In order to speed-up development processes, several ready-to-use frameworks have been used for both server and client side of the project:
-
-* Server side: Django web framework; Django REST Framework for API building; Drf-spectacular for Swagger-UI API documentation.
-* Client side: Streamlit app
+## Documentazione
+Fare riferimento al [wiki]([https://github.com/facebook/react/wiki/Sites-Using-React](https://github.com/Samuele95/IDSProject/wiki)) del progetto per la documentazione e le modalità di utilizzo
